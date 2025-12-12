@@ -6,7 +6,8 @@
     <title>Reinforcement Learning</title>
     <style>
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
         margin: 0;
         background: #f6f7fb;
       }
@@ -175,9 +176,11 @@
         <div class="pad">
           <h1>Reinforcement Learning</h1>
           <div class="muted">
-            The blue dot learns by trying moves. Each move costs <b>-1 point</b>. Reaching the star
-            gives <b>+10 points</b>. Click “Practice many times” and watch it get better.
-            <b><u>NOTE</u></b
+            The blue dot learns by trying moves. Each move costs
+            <b>-1 point</b>. Reaching the green star gives <b>+10 points</b>.
+            The arrows show what the blue dot currently thinks is the best move
+            from each cell. Try "Practice many times" and compare the first few
+            games to later games. <b><u>NOTE</u></b
             >: There is a MAX_MOVES limit of 75 moves per game.
           </div>
         </div>
@@ -231,8 +234,8 @@
         <div class="chartHeader">
           <h3>Moves to reach the star over time (smoothed)</h3>
           <div class="muted">
-            This line shows the average number of moves over the last 30 games (or fewer at the
-            beginning).
+            This line shows the average number of moves over the last 30 games
+            (or fewer at the beginning).
           </div>
         </div>
         <canvas id="chart" width="980" height="240"></canvas>
@@ -263,7 +266,9 @@
         // Q[dotR][dotC][starR][starC][action]
         const Q = Array.from({ length: N }, () =>
           Array.from({ length: N }, () =>
-            Array.from({ length: N }, () => Array.from({ length: N }, () => Array(ACTIONS).fill(0)))
+            Array.from({ length: N }, () =>
+              Array.from({ length: N }, () => Array(ACTIONS).fill(0))
+            )
           )
         );
 
@@ -349,13 +354,15 @@
         function step(eps) {
           const r = dot.r,
             c = dot.c;
-          const a = Math.random() < eps ? randInt(ACTIONS) : bestActionForCell(r, c);
+          const a =
+            Math.random() < eps ? randInt(ACTIONS) : bestActionForCell(r, c);
           const { nr, nc, reward, reached } = transition(r, c, a);
 
           // Q-learning update
           const bestNext = Math.max(...Q[nr][nc][star.r][star.c]);
           const target = reward + (reached ? 0 : gamma * bestNext);
-          Q[r][c][star.r][star.c][a] += alpha * (target - Q[r][c][star.r][star.c][a]);
+          Q[r][c][star.r][star.c][a] +=
+            alpha * (target - Q[r][c][star.r][star.c][a]);
 
           dot = { r: nr, c: nc };
           moves++;
@@ -476,17 +483,32 @@
 
           // Star
           ctx.fillStyle = '#2a8f5a';
-          ctx.fillRect(star.c * cell + 6, star.r * cell + 6, cell - 12, cell - 12);
+          ctx.fillRect(
+            star.c * cell + 6,
+            star.r * cell + 6,
+            cell - 12,
+            cell - 12
+          );
           ctx.fillStyle = 'rgba(255,255,255,0.95)';
           ctx.font = `${Math.floor(cell * 0.55)}px system-ui`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('★', star.c * cell + cell / 2, star.r * cell + cell / 2 + 2);
+          ctx.fillText(
+            '★',
+            star.c * cell + cell / 2,
+            star.r * cell + cell / 2 + 2
+          );
 
           // Dot
           ctx.fillStyle = '#1f4acc';
           ctx.beginPath();
-          ctx.arc(dot.c * cell + cell / 2, dot.r * cell + cell / 2, cell * 0.28, 0, Math.PI * 2);
+          ctx.arc(
+            dot.c * cell + cell / 2,
+            dot.r * cell + cell / 2,
+            cell * 0.28,
+            0,
+            Math.PI * 2
+          );
           ctx.fill();
         }
 
@@ -578,7 +600,11 @@
           cctx.font = '12px system-ui';
           cctx.textAlign = 'right';
           cctx.textBaseline = 'alphabetic';
-          cctx.fillText(`average of last ${SMOOTH_WINDOW}`, W - right, top + 14);
+          cctx.fillText(
+            `average of last ${SMOOTH_WINDOW}`,
+            W - right,
+            top + 14
+          );
         }
 
         function setButtonsDisabled(disabled) {
