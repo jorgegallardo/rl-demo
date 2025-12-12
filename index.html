@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Reinforcement Learning</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 0;
+        background: #f6f7fb;
+      }
+
+      /* Compact, no-scroll layout */
+      .wrap {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px;
+        max-width: 980px;
+        margin: 0 auto;
+      }
+
+      .card {
+        background: white;
+        border: 1px solid #e6e8f0;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pad {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin: 0 0 6px;
+      }
+
+      .muted {
+        font-size: 12px;
+        color: #556;
+        line-height: 1.45;
+        margin: 6px 0 0;
+      }
+
+      /* Stats ABOVE the grid */
+      .statsTop {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .statBox {
+        border: 1px solid #e6e8f0;
+        border-radius: 10px;
+        padding: 10px;
+        background: #fbfcff;
+      }
+      .statLabel {
+        font-size: 11px;
+        color: #667;
+        margin-bottom: 4px;
+      }
+      .statValue {
+        font-size: 14px;
+        font-weight: 650;
+        color: #223;
+      }
+
+      /* Smaller centered grid */
+      .gridWrap {
+        display: flex;
+        justify-content: center;
+        padding: 8px 12px 12px;
+      }
+      canvas#grid {
+        width: 420px;
+        height: 420px;
+        max-width: 100%;
+        border-radius: 0;
+        display: block;
+      }
+
+      /* Buttons under grid */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 12px 14px;
+        border-top: 1px solid #eef0f7;
+      }
+
+      button {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #d7daea;
+        background: #fff;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button:hover {
+        background: #f0f3ff;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      /* Different color for reset */
+      .resetBtn {
+        border-color: #f1b6b6;
+        background: #fff2f2;
+      }
+      .resetBtn:hover {
+        background: #ffe7e7;
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        user-select: none;
+        padding: 8px 10px;
+        border: 1px solid #e6e8f0;
+        border-radius: 10px;
+        background: #fbfcff;
+      }
+
+      /* Chart */
+      .chartHeader {
+        padding: 12px 12px 0;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 0 0 6px;
+      }
+      canvas#chart {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Practice overlay */
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(240, 242, 255, 0.88);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 650;
+        color: #334;
+      }
+      .overlay .sub {
+        font-size: 12px;
+        font-weight: 500;
+        color: #556;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <!-- Main card: title + stats + grid + controls -->
+      <div class="card" id="mainCard">
+        <div class="pad">
+          <h1>Reinforcement Learning</h1>
+          <div class="muted">
+            The blue dot learns by trying moves. Each move costs <b>-1 point</b>. Reaching the star
+            gives <b>+10 points</b>. Click “Practice many times” and watch it get better.
+            <b><u>NOTE</u></b
+            >: There is a MAX_MOVES limit of 75 moves per game.
+          </div>
+        </div>
+
+        <!-- Stats ABOVE the grid -->
+        <div class="pad" style="padding-top: 0">
+          <div class="statsTop">
+            <div class="statBox">
+              <div class="statLabel">Games played</div>
+              <div class="statValue" id="gamesStat">0</div>
+            </div>
+            <div class="statBox">
+              <div class="statLabel">Moves in this game</div>
+              <div class="statValue" id="movesStat">0</div>
+            </div>
+            <div class="statBox">
+              <div class="statLabel">Current points</div>
+              <div class="statValue" id="pointsStat">0</div>
+            </div>
+            <div class="statBox">
+              <div class="statLabel">Star location</div>
+              <div class="statValue" id="starStat">(0, 0)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gridWrap">
+          <canvas id="grid" width="720" height="720"></canvas>
+        </div>
+
+        <!-- Controls BELOW the grid -->
+        <div class="controls">
+          <button id="moveBtn">Move once</button>
+          <button id="practiceBtn">Practice many times</button>
+          <button id="resetBtn" class="resetBtn">Reset memory</button>
+
+          <label>
+            <input id="showArrows" type="checkbox" checked />
+            Show what it learned
+          </label>
+        </div>
+
+        <div class="overlay" id="overlay">
+          <div>Practicing…</div>
+          <div class="sub">It is moving fast on purpose.</div>
+        </div>
+      </div>
+
+      <!-- Chart card -->
+      <div class="card">
+        <div class="chartHeader">
+          <h3>Moves to reach the star over time (smoothed)</h3>
+          <div class="muted">
+            This line shows the average number of moves over the last 30 games (or fewer at the
+            beginning).
+          </div>
+        </div>
+        <canvas id="chart" width="980" height="240"></canvas>
+        <div class="pad muted" style="padding-top: 0">
+          x-axis: game number. y-axis: moves to reach the star (smoothed).
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const N = 5;
+        const ACTIONS = 4;
+
+        const MOVE_COST = -1;
+        const GOAL_REWARD = 10;
+        const MAX_MOVES = 75;
+
+        // Hidden learning settings
+        const alpha = 0.25;
+        const gamma = 0.95;
+        const EPS_PRACTICE = 0.3;
+        const EPS_WATCH = 0.0;
+
+        // Smoothing for the chart
+        const SMOOTH_WINDOW = 30;
+
+        // Q[dotR][dotC][starR][starC][action]
+        const Q = Array.from({ length: N }, () =>
+          Array.from({ length: N }, () =>
+            Array.from({ length: N }, () => Array.from({ length: N }, () => Array(ACTIONS).fill(0)))
+          )
+        );
+
+        let dot = { r: 0, c: 0 };
+        let star = { r: N - 1, c: N - 1 };
+        let moves = 0;
+        let games = 0;
+
+        // NEW: track points within the current game
+        let points = 0;
+
+        const movesHistory = [];
+
+        // UI
+        const grid = document.getElementById('grid');
+        const ctx = grid.getContext('2d');
+        const chart = document.getElementById('chart');
+        const cctx = chart.getContext('2d');
+
+        const overlay = document.getElementById('overlay');
+
+        const moveBtn = document.getElementById('moveBtn');
+        const practiceBtn = document.getElementById('practiceBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const showArrows = document.getElementById('showArrows');
+
+        const gamesStat = document.getElementById('gamesStat');
+        const movesStat = document.getElementById('movesStat');
+        const pointsStat = document.getElementById('pointsStat');
+        const starStat = document.getElementById('starStat');
+
+        let running = false;
+
+        function randInt(n) {
+          return Math.floor(Math.random() * n);
+        }
+
+        function randomizeStar() {
+          let r, c;
+          do {
+            r = randInt(N);
+            c = randInt(N);
+          } while (r === dot.r && c === dot.c);
+          star = { r, c };
+        }
+
+        function startNewGame() {
+          dot = { r: randInt(N), c: randInt(N) };
+          if (dot.r === star.r && dot.c === star.c) dot = { r: 0, c: 0 };
+          moves = 0;
+          points = 0;
+        }
+
+        function bestActionForCell(r, c) {
+          const arr = Q[r][c][star.r][star.c];
+          let bestA = 0;
+          let bestV = arr[0];
+          for (let a = 1; a < ACTIONS; a++) {
+            if (arr[a] > bestV) {
+              bestV = arr[a];
+              bestA = a;
+            }
+          }
+          return bestA;
+        }
+
+        function transition(r, c, a) {
+          let nr = r,
+            nc = c;
+          if (a === 0) nr--;
+          else if (a === 1) nc++;
+          else if (a === 2) nr++;
+          else if (a === 3) nc--;
+
+          nr = Math.max(0, Math.min(N - 1, nr));
+          nc = Math.max(0, Math.min(N - 1, nc));
+
+          const reached = nr === star.r && nc === star.c;
+          const reward = MOVE_COST + (reached ? GOAL_REWARD : 0);
+          return { nr, nc, reward, reached };
+        }
+
+        function step(eps) {
+          const r = dot.r,
+            c = dot.c;
+          const a = Math.random() < eps ? randInt(ACTIONS) : bestActionForCell(r, c);
+          const { nr, nc, reward, reached } = transition(r, c, a);
+
+          // Q-learning update
+          const bestNext = Math.max(...Q[nr][nc][star.r][star.c]);
+          const target = reward + (reached ? 0 : gamma * bestNext);
+          Q[r][c][star.r][star.c][a] += alpha * (target - Q[r][c][star.r][star.c][a]);
+
+          dot = { r: nr, c: nc };
+          moves++;
+          points += reward;
+
+          if (reached || moves >= MAX_MOVES) {
+            movesHistory.push(moves);
+            games += 1; // ← increment here
+            randomizeStar();
+            startNewGame();
+            return true;
+          }
+          return false;
+        }
+
+        function wipeMemory() {
+          for (let dr = 0; dr < N; dr++) {
+            for (let dc = 0; dc < N; dc++) {
+              for (let sr = 0; sr < N; sr++) {
+                for (let sc = 0; sc < N; sc++) {
+                  for (let a = 0; a < ACTIONS; a++) {
+                    Q[dr][dc][sr][sc][a] = 0;
+                  }
+                }
+              }
+            }
+          }
+          movesHistory.length = 0;
+          games = 0;
+          star = { r: N - 1, c: N - 1 };
+          startNewGame();
+          randomizeStar();
+        }
+
+        function updateStats() {
+          gamesStat.textContent = String(games);
+          movesStat.textContent = String(moves);
+          pointsStat.textContent = String(points);
+          starStat.textContent = `(${star.r}, ${star.c})`;
+        }
+
+        function drawGrid() {
+          const size = grid.width;
+          const cell = size / N;
+          ctx.clearRect(0, 0, size, size);
+
+          // Grid lines (thicker + darker, but not clipped)
+          const lw = 4;
+          ctx.strokeStyle = '#aab3cf';
+          ctx.lineWidth = lw;
+          ctx.lineCap = 'butt';
+
+          for (let i = 0; i <= N; i++) {
+            let p = i * cell;
+
+            // Keep first and last lines fully inside the canvas
+            if (i === 0) p = lw / 2;
+            if (i === N) p = size - lw / 2;
+
+            // horizontal
+            ctx.beginPath();
+            ctx.moveTo(lw / 2, p);
+            ctx.lineTo(size - lw / 2, p);
+            ctx.stroke();
+
+            // vertical
+            ctx.beginPath();
+            ctx.moveTo(p, lw / 2);
+            ctx.lineTo(p, size - lw / 2);
+            ctx.stroke();
+          }
+
+          // Arrows
+          if (showArrows.checked) {
+            ctx.strokeStyle = '#334';
+            ctx.fillStyle = '#334';
+            ctx.lineWidth = 3;
+
+            for (let r = 0; r < N; r++) {
+              for (let c = 0; c < N; c++) {
+                const a = bestActionForCell(r, c);
+                const cx = c * cell + cell / 2;
+                const cy = r * cell + cell / 2;
+                const len = cell * 0.22;
+
+                let dx = 0,
+                  dy = 0;
+                if (a === 0) dy = -len;
+                else if (a === 1) dx = len;
+                else if (a === 2) dy = len;
+                else dx = -len;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + dx, cy + dy);
+                ctx.stroke();
+
+                const angle = Math.atan2(dy, dx);
+                const head = cell * 0.1;
+                const ax = cx + dx,
+                  ay = cy + dy;
+
+                ctx.beginPath();
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(
+                  ax - head * Math.cos(angle - Math.PI / 6),
+                  ay - head * Math.sin(angle - Math.PI / 6)
+                );
+                ctx.lineTo(
+                  ax - head * Math.cos(angle + Math.PI / 6),
+                  ay - head * Math.sin(angle + Math.PI / 6)
+                );
+                ctx.closePath();
+                ctx.fill();
+              }
+            }
+          }
+
+          // Star
+          ctx.fillStyle = '#2a8f5a';
+          ctx.fillRect(star.c * cell + 6, star.r * cell + 6, cell - 12, cell - 12);
+          ctx.fillStyle = 'rgba(255,255,255,0.95)';
+          ctx.font = `${Math.floor(cell * 0.55)}px system-ui`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('★', star.c * cell + cell / 2, star.r * cell + cell / 2 + 2);
+
+          // Dot
+          ctx.fillStyle = '#1f4acc';
+          ctx.beginPath();
+          ctx.arc(dot.c * cell + cell / 2, dot.r * cell + cell / 2, cell * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        function movingAverage(data, windowSize) {
+          const out = new Array(data.length);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            sum += data[i];
+            if (i >= windowSize) sum -= data[i - windowSize];
+            const denom = Math.min(i + 1, windowSize);
+            out[i] = sum / denom;
+          }
+          return out;
+        }
+
+        function drawChart() {
+          const W = chart.width;
+          const H = chart.height;
+
+          cctx.clearRect(0, 0, W, H);
+
+          const left = 60;
+          const right = 16;
+          const top = 14;
+          const bottom = 44;
+
+          // Axes
+          cctx.strokeStyle = '#dfe3f3';
+          cctx.lineWidth = 2;
+          cctx.beginPath();
+          cctx.moveTo(left, top);
+          cctx.lineTo(left, H - bottom);
+          cctx.lineTo(W - right, H - bottom);
+          cctx.stroke();
+
+          // Labels
+          cctx.fillStyle = '#556';
+          cctx.font = '12px system-ui';
+          cctx.textAlign = 'center';
+          cctx.textBaseline = 'alphabetic';
+          cctx.fillText('Game number →', (left + (W - right)) / 2, H - 14);
+
+          cctx.save();
+          cctx.translate(18, (top + (H - bottom)) / 2);
+          cctx.rotate(-Math.PI / 2);
+          cctx.fillText('Moves to reach star (smoothed)', 0, 0);
+          cctx.restore();
+
+          if (movesHistory.length < 2) {
+            cctx.fillStyle = '#667';
+            cctx.textAlign = 'left';
+            cctx.fillText('Practice to see the line.', left + 8, top + 20);
+            return;
+          }
+
+          const smooth = movingAverage(movesHistory, SMOOTH_WINDOW);
+
+          const maxV = Math.max(...smooth);
+          const minV = Math.min(...smooth);
+          const span = Math.max(1e-6, maxV - minV);
+
+          const plotW = W - right - left;
+          const plotH = H - bottom - top;
+
+          // y-axis labels
+          cctx.fillStyle = '#667';
+          cctx.font = '11px system-ui';
+          cctx.textAlign = 'right';
+          cctx.textBaseline = 'middle';
+          cctx.fillText(String(Math.round(maxV)), left - 8, top);
+          cctx.fillText(String(Math.round(minV)), left - 8, H - bottom);
+
+          // Smoothed line
+          cctx.strokeStyle = '#1f4acc';
+          cctx.lineWidth = 3;
+          cctx.beginPath();
+          for (let i = 0; i < smooth.length; i++) {
+            const t = i / (smooth.length - 1);
+            const x = left + t * plotW;
+            const yT = (smooth[i] - minV) / span;
+            const y = top + (1 - yT) * plotH;
+            if (i === 0) cctx.moveTo(x, y);
+            else cctx.lineTo(x, y);
+          }
+          cctx.stroke();
+
+          // Label smoothing window
+          cctx.fillStyle = '#556';
+          cctx.font = '12px system-ui';
+          cctx.textAlign = 'right';
+          cctx.textBaseline = 'alphabetic';
+          cctx.fillText(`average of last ${SMOOTH_WINDOW}`, W - right, top + 14);
+        }
+
+        function setButtonsDisabled(disabled) {
+          moveBtn.disabled = disabled;
+          practiceBtn.disabled = disabled;
+          resetBtn.disabled = disabled;
+          showArrows.disabled = disabled;
+        }
+
+        async function practiceMany() {
+          if (running) return;
+          running = true;
+
+          overlay.style.display = 'flex';
+          setButtonsDisabled(true);
+
+          const practiceMs = 3000;
+          const start = performance.now();
+
+          while (performance.now() - start < practiceMs) {
+            for (let i = 0; i < 25; i++) step(EPS_PRACTICE);
+            drawGrid();
+            drawChart();
+            updateStats();
+            await new Promise((r) => setTimeout(r, 12));
+          }
+
+          // NEW: end cleanly on a fresh game (moves=0, points=0)
+          while (moves > 0) {
+            const finished = step(EPS_PRACTICE);
+            if (finished) break;
+          }
+
+          drawGrid();
+          drawChart();
+          updateStats();
+
+          overlay.style.display = 'none';
+          setButtonsDisabled(false);
+          running = false;
+        }
+
+        // Handlers
+        moveBtn.onclick = () => {
+          if (running) return;
+          step(EPS_WATCH);
+          drawGrid();
+          drawChart();
+          updateStats();
+        };
+
+        practiceBtn.onclick = practiceMany;
+
+        resetBtn.onclick = () => {
+          if (running) return;
+          wipeMemory();
+          drawGrid();
+          drawChart();
+          updateStats();
+        };
+
+        showArrows.onchange = () => drawGrid();
+
+        // Init
+        startNewGame();
+        randomizeStar();
+        drawGrid();
+        drawChart();
+        updateStats();
+      })();
+    </script>
+  </body>
+</html>
