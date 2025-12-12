@@ -594,17 +594,6 @@
             else cctx.lineTo(x, y);
           }
           cctx.stroke();
-
-          // Label smoothing window
-          cctx.fillStyle = '#556';
-          cctx.font = '12px system-ui';
-          cctx.textAlign = 'right';
-          cctx.textBaseline = 'alphabetic';
-          cctx.fillText(
-            `average of last ${SMOOTH_WINDOW}`,
-            W - right,
-            top + 14
-          );
         }
 
         function setButtonsDisabled(disabled) {
