@@ -50,7 +50,7 @@
       /* Stats ABOVE the grid */
       .statsTop {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-columns: repeat(5, 1fr);
         gap: 8px;
         font-size: 13px;
       }
@@ -193,6 +193,10 @@
               <div class="statValue" id="gamesStat">0</div>
             </div>
             <div class="statBox">
+              <div class="statLabel">Total points</div>
+              <div class="statValue" id="totalPointsStat">0</div>
+            </div>
+            <div class="statBox">
               <div class="statLabel">Moves in this game</div>
               <div class="statValue" id="movesStat">0</div>
             </div>
@@ -286,6 +290,7 @@
 
         // NEW: track points within the current game
         let points = 0;
+        let totalPoints = 0;
 
         const movesHistory = [];
 
@@ -304,6 +309,7 @@
         const randomWhenUnsure = document.getElementById('randomWhenUnsure');
 
         const gamesStat = document.getElementById('gamesStat');
+        const totalPointsStat = document.getElementById('totalPointsStat');
         const movesStat = document.getElementById('movesStat');
         const pointsStat = document.getElementById('pointsStat');
         const starStat = document.getElementById('starStat');
@@ -379,6 +385,7 @@
           dot = { r: nr, c: nc };
           moves++;
           points += reward;
+          totalPoints += reward;
 
           if (reached || moves >= MAX_MOVES) {
             movesHistory.push(moves);
@@ -404,6 +411,7 @@
           }
           movesHistory.length = 0;
           games = 0;
+          totalPoints = 0;
           star = { r: N - 1, c: N - 1 };
           startNewGame();
           randomizeStar();
@@ -411,6 +419,7 @@
 
         function updateStats() {
           gamesStat.textContent = String(games);
+          totalPointsStat.textContent = String(totalPoints);
           movesStat.textContent = String(moves);
           pointsStat.textContent = String(points);
           starStat.textContent = `(${star.r}, ${star.c})`;
