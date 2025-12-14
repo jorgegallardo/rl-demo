@@ -221,6 +221,13 @@
             <input id="showArrows" type="checkbox" checked />
             Show what it learned
           </label>
+
+          <label
+            title="When different moves seem equally good, it will pick one at random."
+          >
+            <input id="randomWhenUnsure" type="checkbox" />
+            When it’s unsure, pick a random move
+          </label>
         </div>
 
         <div class="overlay" id="overlay">
@@ -294,6 +301,7 @@
         const practiceBtn = document.getElementById('practiceBtn');
         const resetBtn = document.getElementById('resetBtn');
         const showArrows = document.getElementById('showArrows');
+        const randomWhenUnsure = document.getElementById('randomWhenUnsure');
 
         const gamesStat = document.getElementById('gamesStat');
         const movesStat = document.getElementById('movesStat');
@@ -324,15 +332,19 @@
 
         function bestActionForCell(r, c) {
           const arr = Q[r][c][star.r][star.c];
-          let bestA = 0;
           let bestV = arr[0];
-          for (let a = 1; a < ACTIONS; a++) {
-            if (arr[a] > bestV) {
-              bestV = arr[a];
-              bestA = a;
-            }
+          for (let a = 1; a < ACTIONS; a++) bestV = Math.max(bestV, arr[a]);
+
+          // If multiple moves are tied for best, optionally break ties randomly.
+          // This avoids always picking the first direction when everything is equal (common at the start).
+          const EPS_TIE = 1e-9;
+          const best = [];
+          for (let a = 0; a < ACTIONS; a++) {
+            if (Math.abs(arr[a] - bestV) <= EPS_TIE) best.push(a);
           }
-          return bestA;
+
+          if (!randomWhenUnsure.checked || best.length === 1) return best[0];
+          return best[randInt(best.length)];
         }
 
         function transition(r, c, a) {
